@@ -12,7 +12,7 @@ import com.google.inject.Injector;
 public class Application
 {
     public static void main( String[] args ) {
-        final Injector injector = Guice.createInjector(new ProductionConfiguration());
+        final Injector injector = Guice.createInjector(new Configuration());
         final IVendingMachineConsumer consumer = injector.getInstance(IVendingMachineConsumer.class);
         final IVendingMachineMaintenance maintenance = injector.getInstance(IVendingMachineMaintenance.class);
 
