@@ -1,8 +1,6 @@
 package com.artemmensk.service;
 
-import com.artemmensk.model.CoinType;
-
-import java.util.Map;
+import com.artemmensk.model.Money;
 
 public interface IVendingMachineConsumer {
 
@@ -15,11 +13,11 @@ public interface IVendingMachineConsumer {
     Integer getPrice(Integer slotId);
 
     /**
-     * Buys the product for a given product slot and returns change if needed.
+     * Buys the product for a given product slot and returns computeChange if needed.
      *
      * @param slotId product slot
-     * @param coins collection of coins
-     * @return collection of coins representing the change
+     * @param money wrapped collection of money
+     * @return wrapped collection of money representing the computeChange
      */
-    Map<CoinType, Integer> buyProduct(Integer slotId, Map<CoinType, Integer> coins);
+    Money buyProduct(Integer slotId, Money money);
 }

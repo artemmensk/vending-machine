@@ -1,8 +1,9 @@
 package com.artemmensk.service.impl;
 
-import com.artemmensk.Configuration;
+import com.artemmensk.ConfigModule;
 import com.artemmensk.exception.ErrorMessage;
 import com.artemmensk.model.CoinType;
+import com.artemmensk.model.Money;
 import com.artemmensk.model.Slot;
 import com.artemmensk.service.IVendingMachineConsumer;
 import com.artemmensk.service.IVendingMachineMaintenance;
@@ -13,22 +14,52 @@ import java.util.Map;
 
 public class VendingMachine implements IVendingMachineMaintenance, IVendingMachineConsumer {
 
-    private final Integer slotNumber;
     private final Map<CoinType, Integer> coins;
     private final Map<Integer, Slot> slots;
 
     @Inject
-    public VendingMachine(@Named("numberOfSlots") Integer numberOfSlots,
-                          @Named("coins") Map<CoinType, Integer> coins,
+    public VendingMachine(@Named("coins") Map<CoinType, Integer> coins,
                           @Named("slots") Map<Integer, Slot> slots) {
-        this.slotNumber = numberOfSlots;
         this.coins = coins;
         this.slots = slots;
     }
 
     @Override
-    public Map<CoinType, Integer> buyProduct(Integer slotId, Map<CoinType, Integer> coins) {
-        return null;
+    public Money buyProduct(Integer slotId, Money customerMoney) {
+        if (!slots.containsKey(slotId)) {
+            throw new IllegalArgumentException(String.format(ErrorMessage.SLOT_NOT_FOUND.getMessage(), slotId));
+        }
+
+        final Slot slot = slots.get(slotId);
+
+        synchronized (slot) {
+
+            if (slot.getQuantity() < 1) {
+                throw new IllegalStateException(String.format(ErrorMessage.NOT_ENOUGH_ITEMS.getMessage(), slotId));
+            }
+
+            final Integer price = slot.getPrice();
+            final Integer sum = customerMoney.value();
+
+            if (price > sum) {
+                throw new IllegalArgumentException(String.format(ErrorMessage.NOT_ENOUGH_MONEY.getMessage(), sum));
+            }
+
+            final Integer rest = sum - price;
+
+            synchronized (this.coins) {
+
+                final Money beforeTransaction = new Money(this.coins);
+                final Money beforeTransactionPlusCustomerMoney = beforeTransaction.add(customerMoney);
+                final Money change = beforeTransactionPlusCustomerMoney.computeChange(rest);
+                final Money afterTransaction = beforeTransactionPlusCustomerMoney.subtract(change);
+
+                coins.putAll(afterTransaction.getCoins());
+                slot.setQuantity(slot.getQuantity() - 1);
+
+                return change;
+            }
+        }
     }
 
     @Override
@@ -64,11 +95,11 @@ public class VendingMachine implements IVendingMachineMaintenance, IVendingMachi
 
     @Override
     public void setPrice(Integer price, Integer slotId) {
-        if (price < Configuration.MINIMAL_PRICE) {
+        if (price < ConfigModule.MINIMAL_PRICE) {
             throw new IllegalArgumentException(String.format(ErrorMessage.PRICE_TOO_SMALL.getMessage(), price));
         }
 
-        if (price % Configuration.MINIMAL_PRICE != 0) {
+        if (price % ConfigModule.MINIMAL_PRICE != 0) {
             throw new IllegalArgumentException(String.format(ErrorMessage.NOT_MULTIPLICITY_PRICE.getMessage(), price));
         }
 

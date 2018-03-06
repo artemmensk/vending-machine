@@ -1,7 +1,6 @@
 package com.artemmensk.service.impl;
 
-import com.artemmensk.Configuration;
-import com.artemmensk.TestConfiguration;
+import com.artemmensk.ConfigModule;
 import com.artemmensk.model.CoinType;
 import com.artemmensk.model.Slot;
 import com.artemmensk.service.IVendingMachineMaintenance;
@@ -16,10 +15,10 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-import static com.artemmensk.TestConfiguration.NUMBER_OF_SLOTS;
+import static com.artemmensk.ConfigModule.NUMBER_OF_SLOTS;
 
-@Guice(modules = TestConfiguration.class)
-public class VendingMachineTest {
+@Guice(modules = ConfigModule.class)
+public class VendingMachineMaintenanceTest {
 
     private static final Integer SLOT_ID = 1;
     private static final Integer PRICE = 500;
@@ -29,11 +28,10 @@ public class VendingMachineTest {
     private final Map<CoinType, Integer> coins;
     private final Map<Integer, Slot> slots;
 
-
     @Inject
-    public VendingMachineTest(IVendingMachineMaintenance maintenance,
-                              @Named("coins") Map<CoinType, Integer> coins,
-                              @Named("slots") Map<Integer, Slot> slots) {
+    public VendingMachineMaintenanceTest(IVendingMachineMaintenance maintenance,
+                                         @Named("coins") Map<CoinType, Integer> coins,
+                                         @Named("slots") Map<Integer, Slot> slots) {
         this.maintenance = maintenance;
         this.coins = coins;
         this.slots = slots;
@@ -42,7 +40,7 @@ public class VendingMachineTest {
     @BeforeMethod
     public void beforeEachTest() {
         Arrays.asList(CoinType.values()).forEach(type -> coins.put(type, 0));
-        IntStream.range(0, NUMBER_OF_SLOTS).forEach(i -> slots.put(i, new Slot()));
+        IntStream.range(1, NUMBER_OF_SLOTS + 1).forEach(id -> slots.put(id, new Slot()));
     }
 
     @Test
